@@ -63,9 +63,3 @@ class Transform3D:
         '''
         return np.dot(self.matrix, point)
 
-
-a = Transform3D([-31.367,-37.562,55.908],'yXz')
-#print(a.sequence)
-#print(a.angles)
-#print(a.matrix)
-print(a.transform([0,0,0.05]))

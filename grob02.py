@@ -4,6 +4,7 @@
 import tkinter
 from tkinter import ttk
 import sys
+import transform
 
 class Main_window(tkinter.Tk):
 
@@ -21,10 +22,18 @@ class Main_window(tkinter.Tk):
         self.f3 = ttk.LabelFrame(self, text='Rotated coordinates')
 
         self.create_variables()
+        self.create_styles()
         self.create_widgets()
         self.create_geometry()
-        
-        
+
+
+    def create_styles(self):
+        style = ttk.Style()
+        style.configure('GO.TButton', font=('Sans', '12' ,'bold'), foreground='green')
+        style.configure('EXIT.TButton', foreground='red')
+        style.configure('OUT.TLabel', width=13 ,background='white' ,font=('Sans','12','bold'))
+
+
     def create_variables(self):
         # var for rotation axes sequence
         self.sequence = tkinter.StringVar(self)
@@ -46,21 +55,21 @@ class Main_window(tkinter.Tk):
         self.input_angle_C = tkinter.DoubleVar(self)
         self.input_angle_C.set(180.0)
         
+        # vars for input coordinates
+        self.input_X = tkinter.DoubleVar(self)
+        self.input_X.set(0.0)
+        self.input_Y = tkinter.DoubleVar(self)
+        self.input_Y.set(0.0)
+        self.input_Z = tkinter.DoubleVar(self)
+        self.input_Z.set(0.0)
 
-    def set_input_angles_op10(self):
-        self.input_angle_A.set(-135.0)
-        self.input_angle_B.set(90.0)
-        self.input_angle_C.set(180.0)
-        self.cycle.set('CYCLE800(0,"TC_GROB",200000,54,0,0,0,90.,-135.,180.,0,0,0,1,0,0)')
-        self.sequence.set('YZX')
-
-
-    def set_input_angles_op20(self):
-        self.input_angle_A.set(-135.0)
-        self.input_angle_B.set(-90.0)
-        self.input_angle_C.set(180.0)
-        self.cycle.set('CYCLE800(0,"TC_GROB",200000,54,0,0,0,-90.,-135.,180.,0,0,0,1,0,0)')
-        self.sequence.set('YZX')
+        # vars for output coordinates
+        self.output_X = tkinter.DoubleVar(self)
+        self.output_X.set(0.0)
+        self.output_Y = tkinter.DoubleVar(self)
+        self.output_Y.set(0.0)
+        self.output_Z = tkinter.DoubleVar(self)
+        self.output_Z.set(0.0)
 
 
     def create_widgets(self):
@@ -69,7 +78,7 @@ class Main_window(tkinter.Tk):
         self.radio20 = ttk.Radiobutton(self.f0, text='Operation 20: G55, G57', variable=self.operation, value='op20', command=self.set_input_angles_op20)
         self.label_cycle = ttk.Label(self.f0, text='Insert CYCLE800 here:')
         self.entry_cycle = ttk.Entry(self.f0, width=60, textvariable=self.cycle)
-        self.button_set = ttk.Button(self.f0, text='SET')
+        self.button_set = ttk.Button(self.f0, text='SET', command=self.set_cycle)
 
         #f0_5 widgets
         self.label_a_popis = ttk.Label(self.f0_5, text='A:')
@@ -84,24 +93,24 @@ class Main_window(tkinter.Tk):
 
         #f1 widgets
         self.label_x_popis = ttk.Label(self.f1, text='X:')
-        self.entry_x = ttk.Entry(self.f1)
+        self.entry_x = ttk.Entry(self.f1, textvariable=self.input_X)
         self.label_y_popis = ttk.Label(self.f1, text='Y:')
-        self.entry_y = ttk.Entry(self.f1)
+        self.entry_y = ttk.Entry(self.f1, textvariable=self.input_Y)
         self.label_z_popis = ttk.Label(self.f1, text='Z:')
-        self.entry_z = ttk.Entry(self.f1)
+        self.entry_z = ttk.Entry(self.f1, textvariable=self.input_Z)
 
         #f2 widgets
-        self.button_null = ttk.Button(self.f2, text='NULL')
-        self.button_go = ttk.Button(self.f2, text='GO!')
-        self.button_exit = ttk.Button(self.f2, text='EXIT', command=lambda: sys.exit(0))
+        self.button_null = ttk.Button(self.f2, text='NULL', command=self.nulling)
+        self.button_go = ttk.Button(self.f2, text='GO!', style='GO.TButton', command=self.go_transform)
+        self.button_exit = ttk.Button(self.f2, text='EXIT', style='EXIT.TButton', command=lambda: sys.exit(0))
 
         #f3 widgets
         self.label_x_out_popis = ttk.Label(self.f3, text='X:')
-        self.entry_x_out = ttk.Entry(self.f3)
+        self.entry_x_out = ttk.Label(self.f3, textvariable=self.output_X, style='OUT.TLabel')
         self.label_y_out_popis = ttk.Label(self.f3, text='Y:')
-        self.entry_y_out = ttk.Entry(self.f3)
+        self.entry_y_out = ttk.Label(self.f3, textvariable=self.output_Y, style='OUT.TLabel')
         self.label_z_out_popis = ttk.Label(self.f3, text='Z:')
-        self.entry_z_out = ttk.Entry(self.f3)
+        self.entry_z_out = ttk.Label(self.f3, textvariable=self.output_Z, style='OUT.TLabel')
 
 
     def create_geometry(self):
@@ -151,6 +160,98 @@ class Main_window(tkinter.Tk):
         self.f3.grid(column=0, row=4, pady=7, padx=7)
 
 
+    def set_cycle(self):
+        try:
+            line = self.cycle.get()
+            a = False
+            parameters = ''
+            for n in line:
+                if n == ')': a = False
+                if a: parameters += n
+                if n == '(': a = True
             
+            parameters = parameters.split(',')
+            angles = [float(parameters[7]), float(parameters[8]), float(parameters[9])]
+            
+            for b in angles:
+                if b > 360.0 or b < -360.0:
+                    self.cycle.set('Angles out of range.')
+                    raise Exception()
+            
+            if parameters[3] == '54':
+                self.input_angle_A.set(float(parameters[8]))
+                self.input_angle_B.set(float(parameters[7]))
+                self.input_angle_C.set(float(parameters[9]))
+                self.sequence.set('YXZ')
+            elif parameters[3] == '27':
+                self.input_angle_A.set(float(parameters[9]))
+                self.input_angle_B.set(float(parameters[8]))
+                self.input_angle_C.set(float(parameters[7]))
+                self.sequence.set('ZYX')
+            elif parameters[3] == '30':
+                self.input_angle_A.set(float(parameters[8]))
+                self.input_angle_B.set(float(parameters[9]))
+                self.input_angle_C.set(float(parameters[7]))
+                self.sequence.set('YZX')
+            elif parameters[3] == '39':
+                self.input_angle_A.set(float(parameters[9]))
+                self.input_angle_B.set(float(parameters[7]))
+                self.input_angle_C.set(float(parameters[8]))
+                self.sequence.set('ZXY')
+            elif parameters[3] == '45':
+                self.input_angle_A.set(float(parameters[7]))
+                self.input_angle_B.set(float(parameters[9]))
+                self.input_angle_C.set(float(parameters[8]))
+                self.sequence.set('XZY')
+            elif parameters[3] == '57':
+                self.input_angle_A.set(float(parameters[7]))
+                self.input_angle_B.set(float(parameters[8]))
+                self.input_angle_C.set(float(parameters[9]))
+                self.sequence.set('XYZ')
+            else:
+                self.cycle.set('Not supported sequence.')                                       
+
+        except:
+            self.cycle.set('Not supported format.')
+
+
+    def nulling(self):
+        self.input_X.set(0.0)
+        self.input_Y.set(0.0)
+        self.input_Z.set(0.0)
+
+
+    def go_transform(self):
+        a = self.input_angle_A.get()
+        b = self.input_angle_B.get()
+        c = self.input_angle_C.get()
+        x = self.input_X.get()
+        y = self.input_Y.get()
+        z = self.input_Z.get()
+        
+        t = transform.Transform3D([a,b,c],self.sequence.get())
+        t_point = t.transform([x, y, z])
+        
+        self.output_X.set(round(t_point[0], 4))
+        self.output_Y.set(round(t_point[1], 4))
+        self.output_Z.set(round(t_point[2], 4))
+        
+
+    def set_input_angles_op10(self):
+        self.input_angle_A.set(-135.0)
+        self.input_angle_B.set(90.0)
+        self.input_angle_C.set(180.0)
+        self.cycle.set('CYCLE800(0,"TC_GROB",200000,54,0,0,0,90.,-135.,180.,0,0,0,1,0,0)')
+        self.sequence.set('YXZ')
+
+
+    def set_input_angles_op20(self):
+        self.input_angle_A.set(-135.0)
+        self.input_angle_B.set(-90.0)
+        self.input_angle_C.set(180.0)
+        self.cycle.set('CYCLE800(0,"TC_GROB",200000,54,0,0,0,-90.,-135.,180.,0,0,0,1,0,0)')
+        self.sequence.set('YXZ')
+
+
 app = Main_window()
 app.mainloop()
