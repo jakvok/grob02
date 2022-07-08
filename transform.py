@@ -45,8 +45,8 @@ class Transform3D:
                         [0, round(math.cos(self.angles[0]),6), round(-1*math.sin(self.angles[0]),6)],
                         [0, round(math.sin(self.angles[0]),6), round(math.cos(self.angles[0]),6)]])
 
-        matrixes = []
-        for char in self.sequence: # correct sequence of 2D rotation matrixes
+        matrixes = [] # list of 2D transform matrices in current sequence
+        for char in self.sequence: # current sequence of 2D rotation matrixes
             if char == 'x': matrixes.append(Tyz)
             elif char == 'y': matrixes.append(Txz)
             elif char == 'z': matrixes.append(Txy)
