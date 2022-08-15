@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import tkinter
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import sys
 import transform
 
@@ -92,17 +92,25 @@ class Main_window(tkinter.Tk):
         # button for fire function to find angle values from raw CYCLE800 string
         self.button_set = ttk.Button(self.f0, text='SET', command=self.set_cycle)
 
+        
+        # commands for number input validation handling
+        vcmd = (self.register(self.check_number), '%P', '%W')
+        ivcmd = (self.register(self.bad_number), '%W')
+        
         # widgets in frame f0_5
         
         # label and entry field for angle A (X axis)
         self.label_a_popis = ttk.Label(self.f0_5, text='A:')
         self.entry_a = ttk.Entry(self.f0_5, textvariable=self.input_angle_A)
+        self.entry_a.configure(validate='focusout', validatecommand=vcmd, invalidcommand=ivcmd)
         # label and entry field for angle B (Y axis)
         self.label_b_popis = ttk.Label(self.f0_5, text='B:')
         self.entry_b = ttk.Entry(self.f0_5, textvariable=self.input_angle_B)
+        self.entry_b.configure(validate='focusout', validatecommand=vcmd, invalidcommand=ivcmd)
         # label and entry field for angle C (Z axis)
         self.label_c_popis = ttk.Label(self.f0_5, text='C:')
         self.entry_c = ttk.Entry(self.f0_5, textvariable=self.input_angle_C)
+        self.entry_c.configure(validate='focusout', validatecommand=vcmd, invalidcommand=ivcmd)
         # label and menu for axes rotation sequence
         self.label_seq = ttk.Label(self.f0_5, text='Rot. sequence:')
         sequences = ['ZYX', 'YZX', 'ZXY', 'XZY', 'YXZ', 'XYZ']
@@ -113,12 +121,15 @@ class Main_window(tkinter.Tk):
         # label and entry field for X axis of input point (vector)
         self.label_x_popis = ttk.Label(self.f1, text='X:')
         self.entry_x = ttk.Entry(self.f1, textvariable=self.input_X)
+        self.entry_x.configure(validate='focusout', validatecommand=vcmd, invalidcommand=ivcmd)
         # label and entry field for Y axis of input point (vector)
         self.label_y_popis = ttk.Label(self.f1, text='Y:')
         self.entry_y = ttk.Entry(self.f1, textvariable=self.input_Y)
+        self.entry_y.configure(validate='focusout', validatecommand=vcmd, invalidcommand=ivcmd)
         # label and entry field for Z axis of input point (vector)
         self.label_z_popis = ttk.Label(self.f1, text='Z:')
         self.entry_z = ttk.Entry(self.f1, textvariable=self.input_Z)
+        self.entry_z.configure(validate='focusout', validatecommand=vcmd, invalidcommand=ivcmd)
 
         # widgets in frame f2
         
@@ -302,6 +313,32 @@ class Main_window(tkinter.Tk):
         self.input_angle_C.set(180.0)
         self.cycle.set('CYCLE800(0,"TC_GROB",200000,54,0,0,0,-90.,-135.,180.,0,0,0,1,0,0)')
         self.sequence.set('YXZ')
+
+    def check_number(self, value, widg):
+        '''
+        function check if entry input is number and returns True if so,
+        if not, returns False and pait value to red
+
+        '''
+        try:
+            float(value)
+            self.nametowidget(widg)['foreground'] = 'black' # method points to current widget object
+            return True
+        except ValueError:
+            if value == '':
+                self.nametowidget(widg).insert(0, 0.0)
+                return True
+            self.nametowidget(widg)['foreground'] = 'red'
+            return False
+
+    def bad_number(self, widg):
+        '''
+        when entry input is not valid, shows error message box and change entry value to 0.0
+        '''
+        messagebox.showerror('Value Error', 'Input value must be a number!')
+        self.nametowidget(widg).delete(0, len(self.nametowidget(widg).get())) # delete involved string chars from index 0 to the last srting index
+        self.nametowidget(widg).insert(0, 0.0) # insert value 0.0
+        self.nametowidget(widg)['foreground'] = 'black'
 
 
 app = Main_window()
